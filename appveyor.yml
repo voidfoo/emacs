@@ -21,7 +21,7 @@ build_script:
   - 'pushd %APPVEYOR_BUILD_FOLDER%'
   - 'bash -lc "pwd"'
   - 'bash -lc "pushd /c/projects/emacs-w64 && ./autogen.sh"'
-  - 'bash -lc "pushd /c/projects/emacs-w64 && ./configure --prefix=/c/emacs-dist --with-modules --with-tree-sitter --with-native-compilation --with-gnutls --without-dbus --without-pop CFLAGS=-O2"'
+  - 'bash -lc "pushd /c/projects/emacs-w64 && ./configure --prefix=/c/emacs-dist --with-modules --with-tree-sitter --with-gnutls --without-dbus --without-pop CFLAGS=-O2"'
   - 'bash -lc "pushd /c/projects/emacs-w64 && make bootstrap && make install"'
 
 after_build:
