@@ -1,0 +1,52 @@
+name: Emacs MSYS2 Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { icon: '🟦', sys: mingw64 }
+    name: 🚧${{ matrix.icon }} ${{ matrix.sys }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+
+    - name: '🧰 Checkout'
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: '${{ matrix.icon }} Setup MSYS2'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{matrix.sys}}
+        update: true
+        install: git zip base-devel mingw-w64-x86_64-autotools mingw-w64-x86_64-toolchain mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff mingw-w64-x86_64-giflib mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-librsvg mingw-w64-x86_64-libwebp mingw-w64-x86_64-lcms2 mingw-w64-x86_64-gnutls mingw-w64-x86_64-jansson mingw-w64-x86_64-libgccjit mingw-w64-x86_64-libxml2 mingw-w64-x86_64-gnutls mingw-w64-x86_64-zlib mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-tree-sitter mingw-w64-x86_64-sqlite3
+
+    - name: '🚧 Build'
+      run: |
+        ./autogen.sh
+        ./configure --prefix=/c/emacs-dist --with-modules --with-tree-sitter --with-native-compilation --with-gnutls --without-dbus --without-pop CFLAGS="-ggdb3 -O0" CXXFLAGS="-ggdb3 -O0" LDFLAGS=-ggdb3
+        make
+        make install
+
+    - name: 'Pack'
+      run: |
+        zip -r /c/emacs-dist.zip /c/emacs-dist
+
+    - name: 'Upload'
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.msystem }}-packages
+        path: C:/*.zip
+        if-no-files-found: ignore
