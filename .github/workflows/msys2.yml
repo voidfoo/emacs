@@ -42,7 +42,7 @@ jobs:
     - name: '🚧 Build and Pack'
       run: |
         ./autogen.sh
-        ./configure --prefix=/c/emacs-`git rev-parse --short HEAD~2` --with-modules --with-tree-sitter --with-native-compilation --with-gnutls --without-dbus --without-pop CFLAGS="-O2"
+        ./configure --prefix=/c/emacs-`git rev-parse --short HEAD~2` --with-modules --with-tree-sitter --with-native-compilation --with-gnutls --without-dbus --without-pop CFLAGS="-O2 -fno-optimize-sibling-calls"
         make
         make install
         git log -m --abbrev-commit --date=relative -3
