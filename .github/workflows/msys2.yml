@@ -30,7 +30,7 @@ jobs:
     - name: '🧰 Checkout'
       uses: actions/checkout@v4
       with:
-        fetch-depth: 3
+        fetch-depth: 10
 
     - name: '${{ matrix.icon }} Setup MSYS2'
       uses: msys2/setup-msys2@v2
@@ -39,18 +39,17 @@ jobs:
         update: true
         install: git zip base-devel mingw-w64-x86_64-autotools mingw-w64-x86_64-toolchain mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff mingw-w64-x86_64-giflib mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-librsvg mingw-w64-x86_64-libwebp mingw-w64-x86_64-lcms2  mingw-w64-x86_64-jansson mingw-w64-x86_64-libgccjit mingw-w64-x86_64-libxml2 mingw-w64-x86_64-gnutls mingw-w64-x86_64-zlib mingw-w64-x86_64-ctags mingw-w64-x86_64-freetype mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-libtree-sitter mingw-w64-x86_64-sqlite3 mingw-w64-x86_64-libwinpthread mingw-w64-x86_64-texinfo
 
-    - name: '🚧 Build and Pack'
+    - name: '🚧 Build'
       run: |
         ./autogen.sh
-        ./configure --prefix=/c/emacs-`git rev-parse --short HEAD~2` --with-modules --with-tree-sitter --with-native-compilation --with-gnutls --without-dbus --without-pop CFLAGS="-O2 -fno-optimize-sibling-calls"
+        ./configure --prefix=/c/emacs-`git rev-parse --short HEAD~5` --with-modules --with-tree-sitter --with-native-compilation --with-gnutls --without-dbus --without-pop CFLAGS="-O2 -fno-optimize-sibling-calls"
         make
         make install
-        git log -m --abbrev-commit --date=relative -3
-        zip -r /c/emacs-`git rev-parse --short HEAD~2`.zip /c/emacs-`git rev-parse --short HEAD~2`/
 
-    # - name: 'Pack'
-    #   run: |
-    #     zip -r /c/emacs-`git rev-parse --short HEAD~2`.zip /c/emacs-dist/*
+    - name: '📦 Pack'
+      run: |
+        git --no-pager log -m --abbrev-commit --date=relative -10
+        zip -r /c/emacs-`git rev-parse --short HEAD~5`.zip /c/emacs-`git rev-parse --short HEAD~5`/
 
     - name: 'Upload'
       if: ${{ !cancelled() }}
