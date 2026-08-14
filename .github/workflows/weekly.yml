@@ -99,6 +99,8 @@ jobs:
     #     make install
 
     - name: '📦 Pack'
+      shell: bash
+      working-directory: ./emacs
       run: |
         set -e
         cd ./emacs
