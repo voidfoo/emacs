@@ -102,11 +102,11 @@ jobs:
       shell: bash
       working-directory: ./emacs
       run: |
-        set -e
-        cd ./emacs
-        git --no-pager log -m --abbrev-commit --date=relative -10
+        # set -e
+        # cd ./emacs
+        git --no-pager log -m --abbrev-commit --date=relative -5
         cd /c
-        echo zip -r /c/emacs-${EMACS_VERSION}.zip emacs-${EMACS_VERSION}/*
+        echo "zip -r /c/emacs-${EMACS_VERSION}.zip emacs-${EMACS_VERSION}/*"
 
     - name: '📤 Publish release'
       if: success()
