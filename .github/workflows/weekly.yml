@@ -1,0 +1,121 @@
+name: Emacs MSYS2 Weekly Build
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC (UTC only; runs can be delayed/skipped on idle repos)
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: 'Upstream ref/SHA to build'
+        default: 'master'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { icon: '🟦', sys: mingw64 }
+    name: 🚧${{ matrix.icon }} ${{ matrix.sys }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    timeout-minutes: 120
+
+    steps:
+
+    - name: '⚙️ configure git core.autocrlf'
+      shell: cmd
+      run: git config --global core.autocrlf false
+    - name: '⚙️ configure git core.eol'
+      shell: cmd
+      run: git config --global core.eol lf
+
+    - name: '🧰 Checkout workflow repo'
+      uses: actions/checkout@v6
+      with:
+        path: ci
+
+    - name: '🧰 Checkout upstream Emacs'
+      uses: actions/checkout@v6
+      with:
+        repository: emacs-mirror/emacs
+        ref: ${{ inputs.upstream_ref || 'master' }}
+        fetch-depth: 1
+        path: emacs
+
+    - name: '📌 Set EMACS_VERSION'
+      run: |
+        set -e
+        cd ./emacs
+        EMACS_VERSION=$(git rev-parse --short HEAD)
+        echo "EMACS_VERSION=$EMACS_VERSION" >> $GITHUB_ENV
+
+    # - name: '${{ matrix.icon }} Setup MSYS2'
+    #   uses: msys2/setup-msys2@v2
+    #   with:
+    #     msystem: ${{matrix.sys}}
+    #     update: true
+    #     install: >-
+    #       git zip base-devel
+    #       mingw-w64-x86_64-autotools
+    #       mingw-w64-x86_64-toolchain
+    #       mingw-w64-x86_64-xpm-nox
+    #       mingw-w64-x86_64-libtiff
+    #       mingw-w64-x86_64-giflib
+    #       mingw-w64-x86_64-libpng
+    #       mingw-w64-x86_64-libjpeg-turbo
+    #       mingw-w64-x86_64-librsvg
+    #       mingw-w64-x86_64-libwebp
+    #       mingw-w64-x86_64-lcms2
+    #       mingw-w64-x86_64-jansson
+    #       mingw-w64-x86_64-libgccjit
+    #       mingw-w64-x86_64-libxml2
+    #       mingw-w64-x86_64-gnutls
+    #       mingw-w64-x86_64-zlib
+    #       mingw-w64-x86_64-ctags
+    #       mingw-w64-x86_64-freetype
+    #       mingw-w64-x86_64-harfbuzz
+    #       mingw-w64-x86_64-cairo
+    #       mingw-w64-x86_64-libtree-sitter
+    #       mingw-w64-x86_64-sqlite3
+    #       mingw-w64-x86_64-libwinpthread
+    #       mingw-w64-x86_64-texinfo
+
+    # - name: '🚧 Build'
+    #   run: |
+    #     set -e
+    #     cd ./emacs
+    #     ./autogen.sh
+    #     ./configure \
+    #       --prefix=/c/emacs-${EMACS_VERSION} \
+    #       --with-modules \
+    #       --with-tree-sitter \
+    #       --with-native-compilation \
+    #       --with-gnutls \
+    #       --without-dbus \
+    #       --without-pop \
+    #       CFLAGS="-O2 -fno-optimize-sibling-calls"
+    #     make
+    #     make install
+
+    - name: '📦 Pack'
+      run: |
+        set -e
+        cd ./emacs
+        git --no-pager log -m --abbrev-commit --date=relative -10
+        cd /c
+        echo zip -r /c/emacs-${EMACS_VERSION}.zip emacs-${EMACS_VERSION}/*
+
+    - name: '📤 Publish release'
+      if: success()
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        cd ./ci
+        gh release create "emacs-$env:EMACS_VERSION" `
+          "./LICENSE" `
+          --title "Emacs $env:EMACS_VERSION (mingw64)" `
+          --notes "Upstream: https://github.com/emacs-mirror/emacs/commit/$env:EMACS_VERSION"
