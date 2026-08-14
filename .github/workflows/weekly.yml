@@ -46,11 +46,9 @@ jobs:
         path: emacs
 
     - name: '📌 Set EMACS_VERSION'
-      run: |
-        set -e
-        cd ./emacs
-        EMACS_VERSION=$(git rev-parse --short HEAD)
-        echo "EMACS_VERSION=$EMACS_VERSION" >> $GITHUB_ENV
+      shell: bash
+      working-directory: ./emacs
+      run: echo "EMACS_VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
     # - name: '${{ matrix.icon }} Setup MSYS2'
     #   uses: msys2/setup-msys2@v2
